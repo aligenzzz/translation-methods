@@ -1,4 +1,5 @@
-from constants import KEYWORDS, TYPES, OPERATORS, SEPARATORS, SPECIAL_SYMBOLS
+from constants import KEYWORDS, INVALID_OPERATORS, OPERATORS, SPECIAL_SYMBOLS, SEPARATORS
+import re
 
 class LexicalAnalyzer:
     # enum of all tokens
@@ -26,9 +27,9 @@ class LexicalAnalyzer:
                 continue
 
             if current_char.isspace():
-                if len(result) == 0 or result[-1][1] != 'Separator':
-                    result.append((ID, 'Separator', ' '))
-                    ID += 1
+                # if len(result) == 0 or result[-1][1] != 'Separator':
+                #     result.append((ID, 'Separator', ' '))
+                #     ID += 1
 
                 position += 1
                 continue
@@ -37,10 +38,8 @@ class LexicalAnalyzer:
                 literal = LexicalAnalyzer._read_while_with_two(text, position, 
                                                     lambda c: c.isdigit() or c in ['.','E','E'],
                                                     lambda c, next_c: c in ['E','e'] and next_c in ['+','-'])   
-
-                if len(literal) > 1 and literal[0] == '0' and literal[1] != '.':
-                    result.append((ID, 'Error', literal))
-                elif literal.count('.') > 1:
+                # Error 1
+                if literal.count('.') > 1:
                     result.append((ID, 'Error', literal))
                 else:
                     result.append((ID, 'Literal', literal))
@@ -52,11 +51,14 @@ class LexicalAnalyzer:
             if current_char.isalpha():
                 identifier = LexicalAnalyzer._read_while_with_one(text, position, lambda c: c.isalnum())
 
+                # Error 2
+                if len(result) > 1 and result[-1][2].isnumeric():
+                    result[-1] = (result[-1][0], 'Error', result[-1][2] + identifier)
+                    position += len(identifier)
+                    continue
+
                 if identifier in KEYWORDS:
-                    if len(result) > 2 and result[-2][2] in TYPES:
-                        result.append((ID, 'Error', identifier))
-                    else:
-                        result.append((ID, 'Keyword', identifier))
+                    result.append((ID, 'Keyword', identifier)) 
                 else:
                     result.append((ID, 'Identifier', identifier))
 
@@ -64,61 +66,58 @@ class LexicalAnalyzer:
                 position += len(identifier)
                 continue
 
-            if len(result) > 2 and result[-2][2] == 'include' and current_char == '<':
-                result.append((ID, 'Operator', current_char))
-                ID += 1
-                position += 1
-
-                identifier = LexicalAnalyzer._read_while_with_one(text, position, lambda c: c.isalpha() or c == '.')
+            if len(result) > 1 and result[-1][2] == 'include' and current_char == '<':
+                identifier = LexicalAnalyzer._read_while_with_one(text, position, lambda c: c.isalpha() or c in ['.', '>', '<', '"'])
                 result.append((ID, 'Identifier', identifier))
 
                 ID += 1
                 position += len(identifier)
                 continue     
 
-            if current_char == '"':
+            if current_char == '"' or current_char == '\'':
                 result.append((ID, 'Separator', current_char))
                 ID += 1
                 position += 1
 
-                literal = LexicalAnalyzer._read_while_with_one(text, position, lambda c: c != '"')
-                result.append((ID, 'Literal', literal))
-                ID += 1
+                literal = LexicalAnalyzer._read_while_with_one(text, position, lambda c: c != current_char)
 
-                result.append((ID, 'Literal', '"'))
+                parts = re.split(r'(?<!\\)(\\n|\\t)', literal)
+                while '' in parts:
+                    parts.remove('')
+
+                for part in parts:
+                    if part in ['\\n', '\\t']:
+                        result.append((ID, 'Separator', part))   
+                    else:
+                        result.append((ID, 'Literal', part))
+                    ID += 1
+
+                result.append((ID, 'Separator', current_char))
                 ID += 1
                 position += len(literal) + 1
 
                 continue
 
-            if current_char == "'":
-                result.append((ID, 'Separator', current_char))
-                ID += 1
-                position += 1
-               
-                symbol = LexicalAnalyzer._read_while_with_one(text, position, lambda c: c != "'")
-
-                if len(symbol) > 1:
-                    result.append((ID, 'Error', symbol))
-                else:
-                    result.append((ID, 'Literal', symbol))
-                ID += 1
-
-                result.append((ID, 'Separator', '\''))
-                ID += 1
-                position += len(symbol) + 1
-
-                continue
-
             if current_char in OPERATORS:
                 operator = LexicalAnalyzer._read_while_with_one(text, position, lambda c: c in OPERATORS)
+                
+                # Error 3
+                if len(result) > 1 and result[-1][2] + operator in INVALID_OPERATORS:
+                    result[-1] = (result[-1][0], 'Error', result[-1][2] + operator)
+                    position += len(operator)
+                    continue
+
                 result.append((ID, 'Operator', operator))
 
                 ID += 1
                 position += len(operator)
                 continue  
 
-            result.append((ID, 'Separator', current_char))
+            # Error 4
+            if current_char not in SEPARATORS:
+                result.append((ID, 'Error', current_char))
+            else:
+                result.append((ID, 'Separator', current_char))
             ID += 1
             position += 1
 
@@ -165,4 +164,4 @@ class LexicalAnalyzer:
                 i += 1
             else:
                 i += 1
-        return result           
+        return result          
