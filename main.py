@@ -1,4 +1,5 @@
 from lexical_analyzer import LexicalAnalyzer
+from syntax_analyzer import SyntaxAnalyzer, print_tree
 from tabulate import tabulate
 from colorama import Fore
 
@@ -10,10 +11,14 @@ def if_error(content):
     return content
 
 if __name__ == '__main__':
-    with open('text.txt', 'r', encoding='utf-8') as file:
+    with open('text_for_syntax.txt', 'r', encoding='utf-8') as file:
         text = file.read()
     
     result = LexicalAnalyzer.analyze(text)
 
-    headers = ['ID', 'Token', 'Value']        
-    print(tabulate(list(map(if_error, result)), headers=headers))
+    # for lexical analyzer
+    # headers = ['ID', 'Token', 'Value']        
+    # print(tabulate(list(map(if_error, result)), headers=headers))
+
+    result = SyntaxAnalyzer.analyze(result)
+    print_tree(result)
