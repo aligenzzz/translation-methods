@@ -2,7 +2,7 @@ from anytree import RenderTree
 from syntax_analyzer import (VARIABLE_DECLARATION, VARIABLE, CHAR_STATEMENT, 
                              ARRAY_DECLARATION, FUNCTION_DEFINITION, FUNCTION_CALLING, 
                              ASSIGNMENT, ARRAY_ELEMENT, CONDITION_STATEMENT, CASE_CONDITION,
-                             OPERATORS_TWO, LOOP_STATEMENT)
+                             OPERATORS_TWO, LOOP_STATEMENT, TYPES)
 
 
 class SemanticAnalyzer():
@@ -65,7 +65,7 @@ class SemanticAnalyzer():
             if node.name == CHAR_STATEMENT:
                 children_names = [child.name for child in node.children]
                 char = ''.join(children_names)
-                if len(char) > 1 and char not in ('\\n', '\\t'):
+                if len(char) != 1 and char not in ('\\n', '\\t'):
                     result.append(f'Invalid char statement: {char}')
                 continue
 
@@ -148,6 +148,10 @@ class SemanticAnalyzer():
                 if not SemanticAnalyzer._check_type(variable_type, variable_value):
                     result.append(f'Invalid operation for variable: {variable_name}')
                     continue
+
+            if node.name in TYPES and node.parent.name not in (VARIABLE_DECLARATION, ARRAY_DECLARATION, FUNCTION_DEFINITION):
+                result.append(f'Invalid type in: {node.parent.name}')
+                continue
                 
         return result
     

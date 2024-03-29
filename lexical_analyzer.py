@@ -49,7 +49,7 @@ class LexicalAnalyzer:
                 continue
 
             if current_char.isalpha():
-                identifier = LexicalAnalyzer._read_while_with_one(text, position, lambda c: c.isalnum())
+                identifier = LexicalAnalyzer._read_while_with_one(text, position, lambda c: c.isalnum() or c == '_')
 
                 # Error 2
                 if len(result) > 1 and result[-1][2].isnumeric():

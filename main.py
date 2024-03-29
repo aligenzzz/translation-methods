@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     # for syntax analyzer
     result = SyntaxAnalyzer.analyze(result)
-    # print_tree(result)
+    print_tree(result)
 
     # for semantic analyzer
     result = SemanticAnalyzer.analyze(result)

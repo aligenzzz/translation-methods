@@ -2,7 +2,7 @@
 
 struct Person { 
     char name[20];
-    int age;
+    int int int age; // !!! (R)
 };
 
 double sum(double a, int b)
