@@ -1,0 +1,76 @@
+#include <stdio.h>
+
+struct Person { 
+    char name[20];
+    int age;
+};
+
+double sum(double a, int b)
+{
+    return a + c; // !!! (R)
+}
+
+int main() {
+    int numbers[5] = {1E+10, 2, 3, 4, 5}; // !!! (R)
+    char letters[5] = {'\n', 3, 'c', 'd', 'e'}; // !!! (R)
+    Person person1 = {'\n', 30};
+
+    printf("Person's name: %s\n", person1.name);
+    printf("Person's age: %d\n", person1.age);
+
+    printf("Numbers array:\n");
+    for (int i = 0; i< 5; i++) {
+        printf("% d ",numbers[i]);
+    }
+    printf("\n");
+
+    printf("Letters array:\n");
+    int j = 0;
+    while (j < 5) {
+        printf("%c ", letters[j]);
+        j++;
+    }
+    printf("\n");
+
+    int x = 10+10; 
+    if (x > 5) {
+        printf("x is greater than 5\n");
+    } else {
+        printf("x is not greater than 5\n");
+    }
+
+    double vro = roop(5); // !!! (R)
+    double nn = sum(1, 1.1); // !!! (R)
+    nn = sum(1, 1, 1); // !!! (R)
+
+    int j = 2.9999; // !!! (R)
+
+    int arr[5];
+    arr[5] = 10; // !!! (R)
+
+    int arr2[10.0]; // !!! (R)
+
+    char c = 'A';
+    int result = c + 1; // !!! (R)
+
+    if (c = 'A') { // !!! (R)
+        c = 6; // !!! (R)
+    } 
+    
+    char grade = 'B';
+    switch (pip) { // !!! (R)
+        case c: // !!! (R)
+            printf('Excellent!\n'); // !!! (R)
+            break;
+        case 'B':
+            printf("Good!\n");
+            break;
+        case 'C':
+            printf("Average!\n");
+            break;
+        default:
+            printf("Need improvement!\n");
+    }
+
+    return 0;
+}

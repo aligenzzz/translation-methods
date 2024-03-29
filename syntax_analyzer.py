@@ -1,5 +1,5 @@
 from anytree import Node, RenderTree
-from constants import TYPES, OPERATORS, SPECIAL_SYMBOLS
+from constants import TYPES, SPECIAL_SYMBOLS
 
 LIB_CONNECTION = 'lib connection'
 STRUCTURE_DEFINITION = 'structure definition'
@@ -10,12 +10,13 @@ FUNCTION_ARGUMENTS = 'arguments'
 BLOCK_OF_CODE = 'block of code'
 RETURN_STATEMENT = 'return'
 STRING_STATEMENT = 'string'
-CHAR_STATEMENT = 'char'
+CHAR_STATEMENT = 'char st.'
 IF_ELSE_STATEMENT = 'if-else'
 IF_STATEMENT = 'if'
 ELSE_STATEMENT = 'else'
 CONDITION_STATEMENT = 'condition'
-VARIABLE_DECLARATION = 'variable'
+VARIABLE_DECLARATION = 'variable declaration'
+VARIABLE = 'variable'
 ARRAY_DECLARATION = 'array'
 ARRAY_SIZE = 'size'
 ARRAY_ELEMENT = 'array element'
@@ -97,6 +98,11 @@ class SyntaxAnalyzer:
                 current_node = current_node.parent
                 current_node = current_node.parent
                 continue
+            if token == '}' and current_node.name == BLOCK_OF_CODE and current_node.parent.name == FUNCTION_PARAMETERS: 
+                current_node = current_node.parent
+                current_node = current_node.parent
+                current_node = current_node.parent
+                continue
             
             # array declaration
             if (id + 2) < n and token in TYPES and tokens[id + 1][1] == IDENTIFIER_TOKEN and tokens[id + 2][2] == '[':
@@ -116,7 +122,12 @@ class SyntaxAnalyzer:
                 continue
 
             # variable declaration
-            if (id + 1) < n and token in TYPES and tokens[id + 1][1] == IDENTIFIER_TOKEN:
+            if (id + 2) < n and token == 'const' and tokens[id + 2][1] == IDENTIFIER_TOKEN:
+                node = Node(VARIABLE_DECLARATION, parent=current_node)
+                current_node = node
+                Node(token, parent=current_node)
+                continue
+            if (id + 1) < n and token in TYPES and tokens[id + 1][1] == IDENTIFIER_TOKEN and current_node.name != VARIABLE_DECLARATION:
                 node = Node(VARIABLE_DECLARATION, parent=current_node)
                 current_node = node
                 Node(token, parent=current_node)
@@ -127,6 +138,13 @@ class SyntaxAnalyzer:
                 Node(token, parent=current_node)
                 continue
             if token == ';' and current_node.name == VARIABLE_DECLARATION:
+                current_node = current_node.parent
+                continue 
+            if token in ',' and current_node.name == VARIABLE_DECLARATION and current_node.parent.name == FUNCTION_PARAMETERS:
+                current_node = current_node.parent
+                continue 
+            if token in ')' and current_node.name == VARIABLE_DECLARATION and current_node.parent.name == FUNCTION_PARAMETERS:
+                current_node = current_node.parent
                 current_node = current_node.parent
                 continue 
             
@@ -163,10 +181,16 @@ class SyntaxAnalyzer:
                 current_node = node
                 continue 
             if current_node.name in OPERATORS_TWO and len(current_node.children) == 1 and \
-               (token_type == LITERAL_TOKEN or token_type == IDENTIFIER_TOKEN):
+               token_type == LITERAL_TOKEN:
                 Node(token, parent=current_node)
                 current_node = current_node.parent
                 continue 
+            if current_node.name in OPERATORS_TWO and len(current_node.children) == 1 and \
+               token_type == IDENTIFIER_TOKEN:
+                node = Node(VARIABLE, parent=current_node)
+                Node(token, parent=node)
+                current_node = current_node.parent
+                continue
             if token == ';' and current_node.name in OPERATORS_TWO:
                 current_node = current_node.parent
                 continue 
@@ -212,6 +236,8 @@ class SyntaxAnalyzer:
             if token == '}' and current_node.parent.name == IF_STATEMENT:
                 current_node = current_node.parent
                 current_node = current_node.parent
+                if (id + 1) < n and tokens[id + 1][2] != ELSE_STATEMENT:
+                    current_node = current_node.parent
                 continue
             if token == 'else':
                 node = Node(ELSE_STATEMENT, parent=current_node)
@@ -225,7 +251,7 @@ class SyntaxAnalyzer:
 
             # function calling
             if (id + 1) < n and token_type == IDENTIFIER_TOKEN and tokens[id + 1][2] == '(' and \
-               current_node.name in (BLOCK_OF_CODE, CASE_CODE, DEFAULT_CODE):
+               current_node.name in (BLOCK_OF_CODE, CASE_CODE, DEFAULT_CODE, ASSIGNMENT, *OPERATORS_TWO):
                 node = Node(FUNCTION_CALLING, parent=current_node)
                 current_node = node
                 Node(token, parent=current_node)
@@ -236,11 +262,9 @@ class SyntaxAnalyzer:
                 continue
             if token == ')' and current_node.name == FUNCTION_ARGUMENTS:
                 current_node = current_node.parent
+                current_node = current_node.parent
                 continue
             if token == ',' and current_node.name == FUNCTION_ARGUMENTS:
-                continue
-            if token == ';' and current_node.name == FUNCTION_CALLING:
-                current_node = current_node.parent
                 continue
             
             # string statement
@@ -302,11 +326,13 @@ class SyntaxAnalyzer:
             # array element
             if (id - 1) >= 0 and token == '[' and tokens[id - 1][1] == IDENTIFIER_TOKEN:
                 temp_node = current_node.children[-1]
+                temp_node = temp_node.children[0]
+                current_node.children = current_node.children[:len(current_node.children) - 1]
                 node = Node(ARRAY_ELEMENT, parent=current_node)
                 temp_node.parent = node
                 current_node = node
                 continue 
-            if token_type == IDENTIFIER_TOKEN and current_node.name == ARRAY_ELEMENT:
+            if token_type in (IDENTIFIER_TOKEN, LITERAL_TOKEN) and current_node.name == ARRAY_ELEMENT:
                 node = Node(ARRAY_INDEX, parent=current_node)
                 Node(token, parent=node)
                 current_node = node
@@ -363,6 +389,13 @@ class SyntaxAnalyzer:
                 current_node = current_node.parent
                 continue
             if token == ';' and current_node.name == CONDITION_STATEMENT:
+                continue
+
+            # variable
+            if token_type == IDENTIFIER_TOKEN and current_node.name not in (VARIABLE_DECLARATION, STRUCTURE_DEFINITION,
+                                                                            ARRAY_DECLARATION, FUNCTION_DEFINITION):
+                node = Node(VARIABLE, parent=current_node)
+                Node(token, parent=node)
                 continue
 
             if token != ';':
