@@ -1,6 +1,7 @@
 from lexical_analyzer import LexicalAnalyzer
 from syntax_analyzer import SyntaxAnalyzer, print_tree
 from semantic_analyzer import SemanticAnalyzer
+from translator import Translator
 from tabulate import tabulate
 from colorama import Fore
 
@@ -12,7 +13,7 @@ def if_error(content):
     return content
 
 if __name__ == '__main__':
-    with open('text_for_semantic.txt', 'r', encoding='utf-8') as file:
+    with open('test1.txt', 'r', encoding='utf-8') as file:
         text = file.read()
     
     # for lexical analyzer
@@ -22,10 +23,21 @@ if __name__ == '__main__':
 
     # for syntax analyzer
     result = SyntaxAnalyzer.analyze(result)
-    print_tree(result)
+    # print_tree(result)
 
     # for semantic analyzer
     result = SemanticAnalyzer.analyze(result)
     errors = '\n'.join(result)
     errors = f'{Fore.RED}{errors}{Fore.RESET}'
-    print(errors)
+    # print(errors)
+    
+    # for translator
+    result = LexicalAnalyzer.analyze(text)
+    result = SyntaxAnalyzer.analyze(result)
+    
+    Translator.translate(result)
+    Translator.write()
+    
+    with open('result.txt', 'r') as file:
+        code = file.read()
+    exec(code)   

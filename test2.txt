@@ -1,0 +1,53 @@
+#include <stdio.h>
+
+struct Person {
+    char name[20];
+    int age;
+};
+
+int main() {
+    int numbers[5] = {1, 2, 3, 4, 5};
+    char letters[5] = {'a', 'b', 'c', 'd', 'e'};
+    struct Person person1 = {"Alice", 30};
+
+    printf("Person's name: %s\n", person1.name);
+    printf("Person's age: %d\n", person1.age);
+
+    printf("Numbers array:\n");
+    for (int i = 0; i < 5; i++) {
+        printf("%d ", numbers[i]);
+    }
+    printf("\n");
+
+    printf("Letters array:\n");
+    int j = 0;
+    while (j < 5) {
+        printf("%c ", letters[j]);
+        j++;
+    }
+    printf("\n");
+
+    int x = 10;
+    if (x > 5) {
+        printf("x is greater than 5\n");
+    } else {
+        printf("x is not greater than 5\n");
+    }
+
+    char grade = 'B';
+    switch (grade) {
+        case 'A':
+            printf("Excellent!\n");
+            break;
+        case 'B':
+            printf("Good!\n");
+            break;
+        case 'C':
+            printf("Average!\n");
+            break;
+        default:
+            printf("Need improvement!\n");
+    }
+
+    return 0;
+}

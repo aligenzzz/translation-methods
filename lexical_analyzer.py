@@ -106,10 +106,14 @@ class LexicalAnalyzer:
                     result[-1] = (result[-1][0], 'Error', result[-1][2] + operator)
                     position += len(operator)
                     continue
-
-                result.append((ID, 'Operator', operator))
-
-                ID += 1
+                
+                if operator == '][':
+                    result.append((ID, 'Operator', ']'))
+                    result.append((ID, 'Operator', '['))
+                    ID += 2
+                else:
+                    result.append((ID, 'Operator', operator))
+                    ID += 1
                 position += len(operator)
                 continue  
 

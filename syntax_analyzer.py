@@ -57,6 +57,9 @@ class SyntaxAnalyzer:
 
         for id, token_type, token in tokens:
             id -= 1
+            
+            if token == '}' and current_node.name in OPERATORS_TWO and current_node.name.endswith('='):
+                current_node = current_node.parent
 
             # lib connection
             if token in SPECIAL_SYMBOLS:
@@ -70,7 +73,7 @@ class SyntaxAnalyzer:
                 continue
 
             # structure definition
-            if token == 'struct':
+            if token == 'struct' and current_node.name != BLOCK_OF_CODE:
                 node = Node(STRUCTURE_DEFINITION, parent=current_node)
                 current_node = node
                 continue     
@@ -114,7 +117,7 @@ class SyntaxAnalyzer:
                 node = Node(ARRAY_SIZE, parent=current_node)
                 current_node = node
                 continue
-            if token == ']' and current_node.name == ARRAY_SIZE:
+            if token == ']' and current_node.name == ARRAY_SIZE and tokens[id + 1][2] != '[':
                 current_node = current_node.parent
                 continue
             if token == ';' and current_node.name == ARRAY_DECLARATION:
@@ -147,6 +150,13 @@ class SyntaxAnalyzer:
                 current_node = current_node.parent
                 current_node = current_node.parent
                 continue 
+            if token == ',' and current_node.name == VARIABLE_DECLARATION:
+                var_type = current_node.children[0].name
+                current_node = current_node.parent
+                node = Node(VARIABLE_DECLARATION, parent=current_node)
+                current_node = node
+                Node(var_type, parent=current_node)
+                continue
             
             # assignment
             if token == '=' and current_node.name in (ARRAY_DECLARATION, VARIABLE_DECLARATION):
@@ -162,6 +172,12 @@ class SyntaxAnalyzer:
                 temp_node.parent = node
                 current_node = node
                 continue 
+            if token in OPERATORS_TWO and token.endswith('='):
+                temp_node = current_node.children[-1]
+                node = Node(token, parent=current_node)
+                temp_node.parent = node
+                current_node = node
+                continue 
             if token == ';' and current_node.name == ASSIGNMENT:
                 current_node = current_node.parent
                 continue 
@@ -174,19 +190,19 @@ class SyntaxAnalyzer:
                 temp_node.parent = node
                 current_node = node
                 continue 
-            if token in OPERATORS_TWO:
+            if token in OPERATORS_TWO and token_type == OPERATOR_TOKEN:
                 temp_node = current_node.children[-1]
                 node = Node(token, parent=current_node)
                 temp_node.parent = node
                 current_node = node
                 continue 
             if current_node.name in OPERATORS_TWO and len(current_node.children) == 1 and \
-               token_type == LITERAL_TOKEN:
+               token_type == LITERAL_TOKEN and not current_node.name.endswith('='):
                 Node(token, parent=current_node)
                 current_node = current_node.parent
                 continue 
             if current_node.name in OPERATORS_TWO and len(current_node.children) == 1 and \
-               token_type == IDENTIFIER_TOKEN:
+               token_type == IDENTIFIER_TOKEN and not current_node.name.endswith('=') and tokens[id + 1][2] != '[':
                 node = Node(VARIABLE, parent=current_node)
                 Node(token, parent=node)
                 current_node = current_node.parent
@@ -212,7 +228,7 @@ class SyntaxAnalyzer:
                 continue
 
             # dataset
-            if token == '{' and current_node.name == ASSIGNMENT:
+            if token == '{' and current_node.name in (ASSIGNMENT, DATASET):
                 node = Node(DATASET, parent=current_node)
                 current_node = node
                 continue
@@ -324,7 +340,7 @@ class SyntaxAnalyzer:
                 continue
 
             # array element
-            if (id - 1) >= 0 and token == '[' and tokens[id - 1][1] == IDENTIFIER_TOKEN:
+            if (id - 1) >= 0 and token == '[' and tokens[id - 1][1] == IDENTIFIER_TOKEN and current_node.name != ARRAY_INDEX:
                 temp_node = current_node.children[-1]
                 temp_node = temp_node.children[0]
                 current_node.children = current_node.children[:len(current_node.children) - 1]
@@ -332,12 +348,18 @@ class SyntaxAnalyzer:
                 temp_node.parent = node
                 current_node = node
                 continue 
-            if token_type in (IDENTIFIER_TOKEN, LITERAL_TOKEN) and current_node.name == ARRAY_ELEMENT:
+            if token_type == LITERAL_TOKEN and current_node.name == ARRAY_ELEMENT:
                 node = Node(ARRAY_INDEX, parent=current_node)
                 Node(token, parent=node)
                 current_node = node
                 continue
-            if token == ']' and current_node.name == ARRAY_INDEX:
+            if token_type == IDENTIFIER_TOKEN and current_node.name == ARRAY_ELEMENT:
+                node = Node(ARRAY_INDEX, parent=current_node)
+                identifier = Node(VARIABLE, parent=node)
+                Node(token, parent=identifier)
+                current_node = node
+                continue
+            if token == ']' and current_node.name == ARRAY_INDEX and tokens[id + 1][2] != '[':
                 current_node = current_node.parent
                 current_node = current_node.parent
                 continue
@@ -398,9 +420,9 @@ class SyntaxAnalyzer:
                 Node(token, parent=node)
                 continue
 
-            if token != ';':
-                node = Node(token, parent=current_node)               
-
+            if token not in (';', 'struct', '[', ']'):
+                node = Node(token, parent=current_node)     
+                
         return root
                 
 

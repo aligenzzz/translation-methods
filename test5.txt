@@ -1,0 +1,27 @@
+#include <stdio.h>
+
+int main()
+{
+	int a[3][3] = {{1, 2, 3}, {3, 4, 5}, {1, 1, 1}};
+	int b[3][3] = {{1, 1, 1}, {1, 1, 1}, {2, 2, 2}};
+	
+    int n = 3;
+	int diag1 = 0;
+    int diag2 = 0;
+	
+	for (int i = 0; i < n; i++)
+	{
+		diag1 += a[i][i];
+        diag2 += b[i][i];
+	}
+
+    printf("%d", diag1);
+    printf("%d", diag2);
+
+    if (diag1 >= diag2) {
+        printf("bolshe");
+    }
+    else {
+        printf("menshe");
+    }
+}
